@@ -1,0 +1,1364 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sidebar Collapsible</title>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <style>
+        * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+}
+
+.wrapper {
+    display: flex;
+    height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 60px;
+    background: linear-gradient(to bottom, #444, #333);
+    color: white;
+    padding: 10px;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    overflow-y: auto;
+    text-align: center;
+    transition: width 0.3s ease;
+}
+
+.sidebar.open {
+    width: 250px;
+}
+
+/* Logo Container */
+.sidebar .logo-container {
+    position: relative;
+    width: 45px;
+    height: 45px;
+    margin: 2px auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: radial-gradient(circle, #ffffff, #e0e0e0);
+    box-shadow: 
+        0 4px 8px rgba(0, 0, 0, 0.2),
+        inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    border: 2px solid #ddd;
+    transition: transform 0.3s ease;
+}
+
+.sidebar .logo-container:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.sidebar img {
+    width: 40px;
+    height: auto;
+    transition: transform 0.3s ease;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    margin-top: 10px;
+    margin-left: -5px;
+}
+
+.sidebar ul li {
+    padding: 12px;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    transition: opacity 0.3s ease;
+}
+
+.sidebar ul li a {
+    color: white;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+}
+
+.sidebar ul li a i {
+    margin-right: 10px;
+    min-width: 30px;
+    text-align: center;
+}
+
+.sidebar:not(.open) ul li a span {
+    display: none;
+}
+
+/* Main Content */
+.main-content {
+    margin-left: 60px;
+    flex-grow: 1;
+    padding: 20px;
+    background: #f4f4f4;
+    transition: margin-left 0.3s ease;
+    margin-bottom: 50px;
+}
+
+.main-content.open {
+    margin-left: 250px;
+}
+
+/* Header */
+.header {
+    position: fixed;
+    top: 0;
+    left: 60px;
+    right: 0;
+    display: flex;
+    align-items: center;
+    background: #fff;
+    padding: 10px 20px;
+    border-bottom: 2px solid #ddd;
+    z-index: 1000;
+    height: 60px;
+    transition: left 0.3s ease;
+}
+
+.header.open {
+    left: 250px;
+}
+
+/* Toggle Button */
+.header .toggle-btn {
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
+    background: #007bff;
+    color: white;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 1001;
+}
+
+/* Footer */
+.footer {
+    background-color: #333;
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    z-index: 1000;
+}
+
+.footer p {
+    font-size: 12px;
+    margin: 0;
+}
+
+/* Gauge & Chart Containers */
+.container {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.gauge-container {
+   background: white;
+   padding: 20px;
+   border-radius: 10px;
+   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+   width: 50%;  /* Ukuran fleksibel */
+   max-width: 300px;  /* Batas maksimum */
+   min-width: 1280px;  /* Batas minimum */
+   text-align: center;
+}
+
+canvas {
+    display: block;
+    margin: 0 auto;
+    width: 100%;
+    max-width: 1600px;
+    height: auto;
+    min-height: 200px;
+    max-height: 400px;
+    margin: auto;
+    background-color: #ffffff;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
+}
+
+@media (max-width: 768px) {
+    canvas {
+        min-height: 300px;
+        max-height: 400px;
+    }
+}
+
+/* Filter Container */
+.filter-container {
+    display: flex;
+    gap: 20px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+.gauge-container-avg {
+    display: flex;
+    flex-wrap: nowrap; /* Jangan biarkan elemen membungkus ke baris baru */
+    justify-content: flex-start; /* Posisikan konten ke kiri */
+    gap: 10px;
+    width: 100%; /* Membuat lebar kontainer 100% dari elemen induk */
+    max-width: 1300px; /* Atur batas lebar maksimum jika diperlukan */
+    margin: auto; /* Pusatkan secara horizontal */
+    margin-top: 0px; /* Kurangi jarak dari atas */
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+}
+
+.gauge-container-avg .gauge-item {
+    flex-grow: 1; /* Buat elemen di dalamnya mengisi ruang yang lebih besar */
+    min-width: 200px; /* Tentukan lebar minimum agar tidak terlalu kecil */
+    max-width: 300px; /* Tentukan lebar maksimum agar tidak terlalu besar */
+}
+
+.gauge-container-avg {
+    position: relative;
+    top: -10px; /* Geser lebih ke atas */
+}
+
+./* gauge-container-avg {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    width: max-content;
+    margin: auto; Pusatkan horizontal
+    margin-top: 0px; Kurangi jarak dari atas
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+}
+
+.gauge-container-avg {
+    position: relative;
+    top: -10px; Geser lebih ke atas
+}
+.gauge-container-avg {
+    margin-left: 0px; Geser ke kiri sebanyak mungkin
+}
+ */
+
+.filter-item {
+    display: flex;
+    flex-direction: column;
+} 
+
+.filter-item label {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.filter-item input {
+    width: 215px;
+    padding: 8px;
+    font-size: 14px;
+}
+
+.filter-item span {
+    font-weight: bold;
+    font-size: 14px;
+    min-width: 120px;
+    padding: 8px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    display: inline-block;
+    text-align: center;
+}
+
+.filter-item button {
+    height: 36px;
+    padding: 8px 15px;
+    font-size: 14px;
+    cursor: pointer;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    margin-top: 20px;
+}
+.dropdown select {
+        padding: 10px;
+        font-size: 14px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: #fff;
+        transition: all 0.3s ease;
+        width: 200px;
+    }
+
+    .dropdown select:hover {
+        border-color: #888;
+    }
+/* Form Inputs */
+h2 {
+    margin-bottom: 10px;
+    color: #007bff;
+    font-family: 'Poppins', sans-serif;
+    font-weight: 600;
+    text-transform: uppercase;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+/* Main Layout Containers */
+.main-container {
+    display: flex;
+    gap: 20px;
+    padding: 20px;
+    max-width: 1750px;
+    margin: auto;
+}
+
+.left-container {
+    display: flex;
+    flex-direction: column;
+    flex: 2;
+    gap: 20px;
+}
+
+.gauge-container {
+    display: flex;
+    justify-content: space-around;
+    padding: 50px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+.chart-container {
+    padding: 20px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    height: 500px;
+    margin-top: -10px; /* Geser ke atas dengan margin negatif */
+    position: relative; /* Menambahkan posisi relatif */
+    top: -10px; /* Geser lebih ke atas */
+}
+
+.chart-container h2 {
+    margin-bottom: 15px;
+    font-size: 20px;
+    color: #333;
+    text-transform: uppercase;
+}
+
+/* .chart-container {
+    padding: 20px;
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+    text-align: center;
+    height: 500px;
+}
+
+.chart-container h2 {
+    margin-bottom: 15px;
+    font-size: 20px;
+    color: #333;
+    text-transform: uppercase;
+} */
+
+
+
+canvas {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+/* Right Container */
+.right-container {
+    flex: 1;
+    max-width: 400px;
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.right-container h3 {
+    color: #007bff;
+    border-bottom: 3px solid #007bff;
+    padding-bottom: 5px;
+    margin-bottom: 15px;
+    font-size: 18px;
+    text-transform: uppercase;
+}
+
+.form-group {
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 3px;
+}
+
+label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+    font-size: 14px;
+    color: #333;
+}
+
+input {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #ccc;
+    border-radius: 8px;
+    transition: 0.3s;
+    font-size: 14px;
+}
+
+input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.2);
+}
+
+button {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    background: linear-gradient(to bottom, #007bff, #0056b3);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+button:hover {
+    background: linear-gradient(to bottom, #0056b3, #007bff);
+}
+.gauge-container {
+    display: flex;
+    justify-content: center; /* Pusatkan elemen di tengah */
+    gap: 10px; /* Kurangi jarak antar elemen */
+}
+.gauge-item {
+    text-align: center;
+}
+.button-container {
+        display: flex;
+        gap: 15px;
+        justify-content: center; /* Center buttons horizontally */
+        margin-top: 20px;
+    }
+
+    .button-container button {
+        padding: 10px 20px;
+        font-size: 16px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    #calculateAllBtn {
+        background-color: #007BFF;
+        color: white;
+    }
+
+    #calculateAllBtn:hover {
+        background-color: #0056b3;
+    }
+
+    #printBtn {
+        background-color: #28a745;
+        color: white;
+    }
+
+    #printBtn:hover {
+        background-color: #218838;
+    }
+
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="logo-container">
+                <img src="https://monitoring.megahsurya.com/static/msp33p/images/msp_msp.png" alt="Logo">
+            </div>
+            <ul>
+                <li><a href="#"><i class="fas fa-home"></i> <span>Dashboard</span></a></li>
+                <li><a href="#"><i class="fas fa-chart-bar"></i> <span>Reports</span></a></li>
+                <li><a href="#"><i class="fas fa-cogs"></i> <span>Settings</span></a></li>
+            </ul>
+        </div>
+        <!-- Main Content -->
+        <div class="main-content" id="main-content">
+            <!-- Header dengan Logo -->
+            <header class="header">
+                <div class="toggle-btn" onclick="toggleSidebar()">
+                    <i class="fas fa-bars"></i>
+                </div>
+            </header>
+            <h1>Dashboard</h1>
+            <!-- Main Content -->
+        
+            <div class="main-container">
+            <!-- Left Container (Gauges & Chart) -->
+            <div class="left-container">
+                <!-- Gauges -->
+                <div class="gauge-container">
+                    <div class="gauge-item">
+                        <h3>RPM ME-1</h3>
+                        <canvas id="rpmGauge1" width="180" height="180"></canvas>
+                    </div>
+                    <div class="gauge-item">
+                        <h3>RPM ME-2</h3>
+                        <canvas id="rpmGauge2" width="180" height="180"></canvas>
+                    </div>
+                    <div class="gauge-item">
+                        <h3>TANK DOT</h3>
+                        <canvas id="fuelGauge" width="180" height="180"></canvas>
+                    </div>
+                </div>
+                <div class="gauge-container-avg">
+                    <div class="filter-item">
+                        <label for="startDate">Start Datetime:</label>
+                        <input type="datetime-local" id="startDate" value="2024-11-25T12:00">
+                    </div>
+
+                    <div class="filter-item">
+                        <label for="endDate">End Datetime:</label>
+                        <input type="datetime-local" id="endDate" value="2024-11-26T10:59">
+                    </div>
+
+                    <div class="filter-item">
+                        <label>Consumption:</label>
+                        <span id="consumption">0</span>
+                    </div>
+
+                    <div class="filter-item">
+                        <label>Average FOC / HRS:</label>
+                        <span id="foc">0</span>
+                    </div>
+                    <div class="filter-item">
+                        <label for="exportFormat">Export As:</label>
+                        <div class="dropdown">
+                            <select id="exportFormat">
+                                <option value="pdf">PDF</option>
+                                <option value="excel">Excel</option>
+                                <option value="csv">CSV</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="filter-item">
+                        <button onclick="filterData()">Filter</button>
+                    </div>
+                    
+                    <!-- Dropdown Pilihan Format -->
+                    
+                </div>
+                <!-- Chart -->
+                
+                <div class="chart-container">
+                    <h2>GRAPHIC RPM & FUEL LEVEL</h2>
+                    <canvas id="myChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Right Container (Voyage Information) -->
+            <div class="right-container">
+                <h3>Voyage Information</h3>
+                  <div class="form-group">
+                    <label>Voyage No:</label>
+                    <input type="text" value="SR55.001.2025" readonly>
+                </div>
+                <div class="form-group">
+                    <label>Start Date Voyage:</label>
+                    <input type="datetime-local" id="startDatetimeGeneral" class="manual">
+                </div>
+                <div class="form-group">
+                    <label>End Date Voyage:</label>
+                    <input type="datetime-local" id="endDatetimeGeneral" class="manual">
+                </div>
+                <div class="form-group">
+                    <label>Total FOC Voyage (Liters):</label>
+                    
+                     <input type="number" id="totalFOCGeneral" class="manual" readonly>
+                </div>
+
+                <h3>Laden Sailing</h3>
+                <div class="form-group">
+                    <label>Laden Start Sailing Time:</label>
+                    <input type="datetime-local" id="ladenStart">
+                </div>
+
+                <div class="form-group">
+                    <label>Laden End Sailing Time:</label>
+                    <input type="datetime-local" id="ladenEnd">
+                </div>
+
+                <div class="form-group">
+                    <label>Distance Laden Voyage (Nm):</label>
+                    <input type="number" id="ladenDistance" placeholder="Enter the distance in Nautical Miles">
+                </div>
+
+                <div class="form-group">
+                    <label>Speed Average (Knot):</label>
+                    <input type="number" id="speedAverage" class="auto" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label>Total FOC Laden Sailing (Liters):</label>
+                    <input type="number" id="totalFOCLaden" class="auto" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label>Avrg FOC/Hrs Sailing (Liters):</label>
+                    <input type="number" id="avgFOCHours" class="auto" readonly>
+                </div>
+                
+                <h3>Ballast Sailing</h3>
+                <div class="form-group">
+                    <label>Ballast Start Sailing Time:</label>
+                    <input type="datetime-local" id="ballastStart">
+                </div>
+                 <div class="form-group">
+                    <label>Ballast End Date Sailing Time:</label>
+                    <input type="datetime-local" id="ballastEnd">
+                </div>
+                <div class="form-group">
+                    <label>Distance Ballast Voyage (Nm):</label>
+                    <input type="number" id="ballastDistance" placeholder="Enter the distance in Nautical Miles">
+                </div>
+                <div class="form-group">
+                    <label>Speed Average (Knot):</label>
+                    <input type="number" id="speedAverageBallast" class="auto" readonly>
+                </div>
+                <div class="form-group">
+                  <label>Total FOC Ballast Sailing (Liters):</label>
+                   <input type="number" id="totalFOCballast" class="auto" readonly>
+                  <label>Avrg FOC/Hrs Sailing (Liters):</label>
+                  <input type="number" id="avgFOCHoursBallast" class="auto" readonly>
+              </div>
+
+                <!-- <button id="calculateAllBtn">Submit</button> -->
+                <div class="button-container">
+                  <button id="calculateAllBtn">Submit</button>
+                  <button id="printBtn" onclick="window.print()">Print</button>
+                </div>
+            </div>
+        </div>
+           
+    </div>
+        </div>
+    </div>
+    <!-- Footer -->
+    <footer class="footer">
+        <p>2018 - 2025 © MSP Smart Bridges Communication</p>
+    </footer>
+    <script>
+    
+    	 // Data dari tabel
+        const data = [
+            { time: "11/25/2024 12:00", dot: 2000.00, total: 2000, consump: null, rpm1: 3000, rpm2: 2800 },
+            { time: "11/25/2024 13:00", dot: 1890.00, total: 1890, consump: 110.00, rpm1: 2900, rpm2: 2700 },
+            { time: "11/25/2024 13:59", dot: 1780.00, total: 1780, consump: 110.00, rpm1: 2800, rpm2: 2600 },
+            { time: "11/25/2024 14:59", dot: 1670.00, total: 1670, consump: 110.00, rpm1: 2700, rpm2: 2500 },
+            { time: "11/25/2024 15:59", dot: 1560.00, total: 1560, consump: 110.00, rpm1: 2600, rpm2: 2400 },
+            { time: "11/25/2024 16:59", dot: 1450.00, total: 1450, consump: 110.00, rpm1: 2500, rpm2: 2300 },
+            { time: "11/25/2024 17:59", dot: 1340.00, total: 1340, consump: 110.00, rpm1: 2400, rpm2: 2200 },
+            { time: "11/25/2024 18:59", dot: 1230.00, total: 1230, consump: 110.00, rpm1: 2300, rpm2: 2100 },
+            { time: "11/25/2024 19:59", dot: 1120.00, total: 1120, consump: 110.00, rpm1: 2200, rpm2: 2000 },
+            { time: "11/25/2024 20:59", dot: 1010.00, total: 1010, consump: 110.00, rpm1: 2100, rpm2: 1900 },
+            { time: "11/25/2024 21:59", dot: 900.00, total: 900, consump: 110.00, rpm1: 2000, rpm2: 1800 },
+            { time: "11/25/2024 22:59", dot: 790.00, total: 790, consump: 110.00, rpm1: 1900, rpm2: 1700 },
+            { time: "11/26/2024 0:00", dot: 680.00, total: 680, consump: 110.00, rpm1: 1800, rpm2: 1600 },
+            { time: "11/26/2024 0:59", dot: 570.00, total: 570, consump: 110.00, rpm1: 1700, rpm2: 1500 },
+            { time: "11/26/2024 1:59", dot: 2000.00, total: 2000, consump: 110.00, rpm1: 3000, rpm2: 2800 },
+            { time: "11/26/2024 2:59", dot: 1890.00, total: 1890, consump: 110.00, rpm1: 2900, rpm2: 2700 },
+            { time: "11/26/2024 3:59", dot: 1780.00, total: 1780, consump: 110.00, rpm1: 2800, rpm2: 2600 },
+            { time: "11/26/2024 4:59", dot: 1670.00, total: 1670, consump: 110.00, rpm1: 2700, rpm2: 2500 },
+            { time: "11/26/2024 5:59", dot: 1560.00, total: 1560, consump: 110.00, rpm1: 2600, rpm2: 2400 },
+            { time: "11/26/2024 6:59", dot: 1450.00, total: 1450, consump: 110.00, rpm1: 2500, rpm2: 2300 },
+            { time: "11/26/2024 7:59", dot: 1340.00, total: 1340, consump: 110.00, rpm1: 2400, rpm2: 2200 },
+            { time: "11/26/2024 8:59", dot: 1230.00, total: 1230, consump: 110.00, rpm1: 2300, rpm2: 2100 },
+            { time: "11/26/2024 9:59", dot: 1120.00, total: 1120, consump: 110.00, rpm1: 2200, rpm2: 2000 },
+            { time: "11/26/2024 10:59", dot: 1010.00, total: 1010, consump: 110.00, rpm1: 2100, rpm2: 1900 }
+        ];
+        function toggleSidebar() {
+            let sidebar = document.getElementById("sidebar");
+            let mainContent = document.getElementById("main-content");
+            let header = document.querySelector(".header");
+
+            // Toggle class 'open' pada sidebar, main content, dan header
+            sidebar.classList.toggle("open");
+            mainContent.classList.toggle("open");
+            header.classList.toggle("open");
+        }
+
+// Fungsi umum untuk menggambar speedometer
+        function drawSpeedometer(canvasId, currentRPM) {
+            var canvas = document.getElementById(canvasId);
+            var ctx = canvas.getContext("2d");
+            var maxRPM = 3000; // Maksimum RPM
+            var radius = canvas.height / 2;
+
+            // Bersihkan canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Gambar lingkaran luar
+            ctx.beginPath();
+            ctx.arc(radius, radius, radius - 10, Math.PI, 2 * Math.PI, false);
+            ctx.lineWidth = 10;
+            ctx.strokeStyle = '#ddd';
+            ctx.stroke();
+
+            // Gambar warna indikator RPM
+            drawColoredArcs(ctx, radius);
+
+            // Gambar label angka pada speedometer
+            drawMarkersAndLabels(ctx, radius, maxRPM);
+
+            // Gambar jarum penunjuk
+            drawNeedle(ctx, radius, maxRPM, currentRPM);
+
+            // Gambar nilai RPM di bawah ujung jarum dengan warna sesuai rentang
+            drawRPMValueBelowNeedle(ctx, radius, maxRPM, currentRPM);
+        }
+
+        // Fungsi untuk menggambar busur berwarna
+        function drawColoredArcs(ctx, radius) {
+            const ranges = [
+                { start: 0, end: 1000, color: 'green' },
+                { start: 1000, end: 2000, color: 'yellow' },
+                { start: 2000, end: 3000, color: 'red' }
+            ];
+
+            ranges.forEach(range => {
+                const startAngle = Math.PI + (range.start / 3000) * Math.PI;
+                const endAngle = Math.PI + (range.end / 3000) * Math.PI;
+                ctx.beginPath();
+                ctx.arc(radius, radius, radius - 10, startAngle, endAngle, false);
+                ctx.lineWidth = 20;
+                ctx.strokeStyle = range.color;
+                ctx.stroke();
+            });
+        }
+
+        // Fungsi untuk menggambar label angka
+        function drawMarkersAndLabels(ctx, radius, maxRPM) {
+            const markers = [0, 1000, 2000, 3000];
+            markers.forEach(marker => {
+                const angle = Math.PI + (marker / maxRPM) * Math.PI;
+                const x = radius + (radius - 35) * Math.cos(angle);
+                const y = radius + (radius - 35) * Math.sin(angle);
+                ctx.fillStyle = '#333';
+                ctx.font = 'bold 9px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(marker, x, y);
+            });
+        }
+
+        // Fungsi untuk menggambar jarum
+        function drawNeedle(ctx, radius, maxRPM, rpm) {
+            const endAngle = Math.PI + (rpm / maxRPM) * Math.PI;
+            const needleLength = radius - 15;
+            const needleX = radius + needleLength * Math.cos(endAngle);
+            const needleY = radius + needleLength * Math.sin(endAngle);
+
+            // Gambar jarum utama
+            ctx.beginPath();
+            ctx.moveTo(radius, radius);
+            ctx.lineTo(needleX, needleY);
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = '#333';
+            ctx.stroke();
+
+            // Gambar kepala jarum (segitiga)
+            const needleHeadLength = 15;
+            const needleHeadAngle1 = endAngle - Math.PI / 20;
+            const needleHeadAngle2 = endAngle + Math.PI / 20;
+            const headX1 = radius + (needleLength + needleHeadLength) * Math.cos(needleHeadAngle1);
+            const headY1 = radius + (needleLength + needleHeadLength) * Math.sin(needleHeadAngle1);
+            const headX2 = radius + (needleLength + needleHeadLength) * Math.cos(needleHeadAngle2);
+            const headY2 = radius + (needleLength + needleHeadLength) * Math.sin(needleHeadAngle2);
+
+            ctx.beginPath();
+            ctx.moveTo(needleX, needleY);
+            ctx.lineTo(headX1, headY1);
+            ctx.lineTo(headX2, headY2);
+            ctx.closePath();
+            ctx.fillStyle = '#333';
+            ctx.fill();
+        }
+			
+        function drawRPMValueBelowNeedle(ctx, radius, maxRPM, rpm1, rpm2) {
+          const endAngle1 = Math.PI + (rpm1 / maxRPM) * Math.PI;
+          const endAngle2 = Math.PI + (rpm2 / maxRPM) * Math.PI;
+
+          // Posisi tetap di tengah horizontal
+          const textX = radius;
+
+          // Posisi vertikal disesuaikan untuk kedua nilai
+          const textY1 = radius + (radius - 30) * Math.sin(endAngle1) + 65; // Lebih ke bawah
+          const textY2 = textY1 + 5; // Tetap di bawahnya
+
+          // Menentukan warna teks sesuai rentang RPM
+          let textColor1 = rpm1 < 1000 ? 'green' : rpm1 < 2000 ? 'yellow' : 'red';
+          let textColor2 = rpm2 < 1000 ? 'green' : rpm2 < 2000 ? 'yellow' : 'red';
+
+          // Gambar nilai RPM pertama
+          ctx.fillStyle = textColor1;
+          ctx.font = 'bold 14px Arial';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(rpm1 + " RPM", textX, textY1);
+
+          // Gambar nilai RPM kedua di bawahnya
+          ctx.fillStyle = textColor2;
+          
+      }
+
+      
+        // Fungsi untuk menggambar tabung fuel level
+        function drawFuelLevel(canvasId, currentFuel, tankCapacity) {
+            var canvas = document.getElementById(canvasId);
+            var ctx = canvas.getContext("2d");
+            var width = canvas.width;
+            var height = canvas.height;
+
+            // Bersihkan canvas
+            ctx.clearRect(0, 0, width, height);
+
+            // Gambar outline tabung
+            const tankWidth = width / 2;
+            const tankHeight = height - height / 5;
+            const tankX = width / 4;
+            const tankY = height / 10;
+            ctx.beginPath();
+            ctx.rect(tankX, tankY, tankWidth, tankHeight);
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = '#333';
+            ctx.stroke();
+
+            // Hitung persentase bahan bakar
+            const fuelPercentage = (currentFuel / tankCapacity) * 100;
+
+            // Gambar isi bahan bakar dengan gradien warna
+            const fuelHeight = ((tankHeight) * fuelPercentage) / 100;
+            const gradient = ctx.createLinearGradient(tankX, tankY, tankX, tankY + tankHeight);
+            gradient.addColorStop(0, 'rgba(0, 255, 0, 0.8)');
+            gradient.addColorStop(0.5, 'rgba(255, 255, 0, 0.8)');
+            gradient.addColorStop(1, 'rgba(255, 0, 0, 0.8)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(tankX + 5, tankY + tankHeight - fuelHeight, tankWidth - 10, fuelHeight);
+
+            // Gambar garis indikator level
+            const levels = [0, 25, 50, 75, 100];
+            levels.forEach(level => {
+                const y = tankY + tankHeight - (level / 100) * tankHeight;
+                ctx.beginPath();
+                ctx.moveTo(tankX, y);
+                ctx.lineTo(tankX + tankWidth, y);
+                ctx.strokeStyle = '#aaa';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+                ctx.fillStyle = '#333';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'left';
+                ctx.fillText(`${level}%`, tankX + tankWidth + 5, y + 5);
+            });
+
+            // Gambar teks liter dengan bayangan
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+            ctx.shadowBlur = 5;
+            ctx.fillStyle = '#333';
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(`${currentFuel}L / ${tankCapacity}L`, width / 2, height / 2);
+            ctx.shadowBlur = 0; // Hapus bayangan setelah digunakan
+        }
+
+        // Gambar speedometer untuk Engine-1 dan Engine-2
+        drawSpeedometer("rpmGauge1", 900); // Nilai RPM untuk Engine-1
+        drawSpeedometer("rpmGauge2", 2500); // Nilai RPM untuk Engine-2
+
+        // Gambar tabung fuel level
+        const currentFuel = 30; // Volume bahan bakar saat ini (contoh: 30L)
+        const tankCapacity = 50; // Kapasitas total tangki (contoh: 50L)
+        drawFuelLevel("fuelGauge", currentFuel, tankCapacity);
+        
+        
+
+        // Ekstrak data untuk grafik
+        const labels = data.map(item => item.time); // Waktu
+        const dotValues = data.map(item => item.dot); // DOT (Volume)
+        const consumpValues = data.map(item => item.consump); // Consump
+        const totalValues = data.map(item => item.total); // TOTAL
+        const rpm1Values = data.map(item => item.rpm1); // RPM1
+        const rpm2Values = data.map(item => item.rpm2); // RPM2
+
+        const ctx = document.getElementById('myChart').getContext('2d');
+        const myChart = new Chart(ctx, {
+            type: 'line', // Jenis grafik: line
+            data: {
+                labels: labels, // Label waktu
+                datasets: [
+                    {
+                        label: 'DOT (Volume)',
+                        data: dotValues,
+                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                        fill: true,
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        yAxisID: 'y-dot'
+                    },
+                    {
+                        label: 'Consump',
+                        data: consumpValues,
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                        fill: true,
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        yAxisID: 'y-consump'
+                    },
+                    {
+                        label: 'TOTAL',
+                        data: totalValues,
+                        borderColor: 'rgba(255, 165, 0, 1)',
+                        backgroundColor: 'rgba(255, 165, 0, 0.2)',
+                        fill: true,
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        yAxisID: 'y-total'
+                    },
+                    {
+                        label: 'RPM1',
+                        data: rpm1Values,
+                        borderColor: 'rgba(153, 102, 255, 1)',
+                        backgroundColor: 'rgba(153, 102, 255, 0.2)',
+                        fill: true,
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        yAxisID: 'y-rpm'
+                    },
+                    {
+                        label: 'RPM2',
+                        data: rpm2Values,
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        fill: true,
+                        borderWidth: 3,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        yAxisID: 'y-rpm'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            font: {
+                                size: 14
+                            }
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        callbacks: {
+                            label: function (context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += context.parsed.y.toFixed(2);
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Date Time'
+                        }
+                    },
+                    'y-dot': {
+                        type: 'linear',
+                        display: true,
+                        position: 'left', // Posisi sumbu di sebelah kiri
+                        title: {
+                            display: true,
+                            text: 'DOT (Volume)',
+                            font: {
+                                weight: 'bold',
+                                size: 12
+                            },
+                            color: '#000000'
+                        }
+                    },
+                    'y-consump': {
+                        type: 'linear',
+                        display: true,
+                        position: 'left', // Posisi sumbu di sebelah kiri
+                        title: {
+                            display: true,
+                            text: 'Consump',
+                            font: {
+                                weight: 'bold',
+                                size: 12
+                            },
+                            color: '#000000'
+                        },
+                        grid: {
+                            drawOnChartArea: false // Nonaktifkan grid untuk menghindari tumpang tindih
+                        }
+                    },
+                    'y-total': {
+                        type: 'linear',
+                        display: true,
+                        position: 'left', // Posisi sumbu di sebelah kiri
+                        title: {
+                            display: true,
+                            text: 'TOTAL',
+                            font: {
+                                weight: 'bold',
+                                size: 12
+                            },
+                            color: '#000000'
+                        },
+                        grid: {
+                            drawOnChartArea: false // Nonaktifkan grid untuk menghindari tumpang tindih
+                        }
+                    },
+                    'y-rpm': {
+                        type: 'linear',
+                        display: true,
+                        position: 'left', // Posisi sumbu di sebelah kiri
+                        title: {
+                            display: true,
+                            text: 'RPM',
+                            font: {
+                                weight: 'bold',
+                                size: 12
+                            },
+                            color: '#000000'
+                        },
+                        grid: {
+                            drawOnChartArea: false // Nonaktifkan grid untuk menghindari tumpang tindih
+                        }
+                    }
+                }
+            }
+        });
+        
+          const fuelData = [
+        { time: "2024-11-25T12:00", dot: 2000, consump: 0 },
+        { time: "2024-11-25T13:00", dot: 1890, consump: 110 },
+        { time: "2024-11-25T13:59", dot: 1780, consump: 110 },
+        { time: "2024-11-25T14:59", dot: 1670, consump: 110 },
+        { time: "2024-11-25T15:59", dot: 1560, consump: 110 },
+        { time: "2024-11-25T16:59", dot: 1450, consump: 110 },
+        { time: "2024-11-26T00:00", dot: 680, consump: 110 },
+        { time: "2024-11-26T01:59", dot: 2000, consump: 110 },
+        { time: "2024-11-26T02:59", dot: 1890, consump: 110 },
+        { time: "2024-11-30T09:59", dot: 680, consump: 110 },
+        { time: "2024-12-01T20:59", dot: 895, consump: 5 },
+        { time: "2024-12-01T21:59", dot: 890, consump: 5 },
+        { time: "2024-12-02T04:59", dot: 855, consump: 5 },
+    ];
+
+        function calculateConsumptionAndFOC(start, end) {
+            const startTime = new Date(start);
+            const endTime = new Date(end);
+            
+            const diffMs = endTime - startTime;
+            const diffHours = diffMs / (1000 * 60 * 60); // Konversi ke jam
+
+            if (diffHours <= 0) {
+                return { consumption: 0, focPerHour: 0 };
+            }
+
+            // Contoh asumsi konsumsi bahan bakar: 200 liter per jam (bisa diganti sesuai kebutuhan)
+            const fuelConsumptionRate = 200;
+            const totalConsumption = diffHours * fuelConsumptionRate;
+            const focPerHour = totalConsumption / diffHours;
+
+            return { consumption: totalConsumption, focPerHour: focPerHour };
+        }
+        
+        document.addEventListener("DOMContentLoaded", function () {
+            // Fungsi untuk mendapatkan datetime dalam format "YYYY-MM-DDTHH:MM"
+            function getCurrentDateTime(offsetHours = 0) {
+                let now = new Date();
+                now.setHours(now.getHours() + offsetHours); // Tambahkan offset jam
+
+                // Format ke "YYYY-MM-DDTHH:MM"
+                return now.toISOString().slice(0, 16);
+            }
+
+            // Set nilai default ke input datetime-local
+            document.getElementById("startDate").value = getCurrentDateTime(); // Waktu sekarang
+            document.getElementById("endDate").value = getCurrentDateTime(12); // +12 jam dari sekarang
+        });
+        
+        
+        function filterData() {
+            const startDate = document.getElementById("startDate").value;
+            const endDate = document.getElementById("endDate").value;
+
+            if (!startDate || !endDate) {
+                alert("Mohon pilih Start dan End Datetime!");
+                return;
+            }
+
+            const { consumption, focPerHour } = calculateConsumptionAndFOC(startDate, endDate);
+
+            document.getElementById("consumption").textContent = consumption.toFixed(2) + " L";
+            document.getElementById("foc").textContent = focPerHour.toFixed(2) + " L/H";
+
+            alert(`Filter dari ${startDate} sampai ${endDate}\nConsumption: ${consumption.toFixed(2)} L\nAverage FOC / HRS: ${focPerHour.toFixed(2)} L/H`);
+        }
+
+        function calculateConsumptionAndFOC(start, end) {
+            const startTime = new Date(start);
+            const endTime = new Date(end);
+            
+            const diffMs = endTime - startTime;
+            const diffHours = diffMs / (1000 * 60 * 60); // Konversi ke jam
+
+            if (diffHours <= 0) {
+                return { consumption: 0, focPerHour: 0 };
+            }
+
+            // Contoh asumsi konsumsi bahan bakar: 200 liter per jam (bisa diganti sesuai kebutuhan)
+            const fuelConsumptionRate = 200;
+            const totalConsumption = diffHours * fuelConsumptionRate;
+            const focPerHour = totalConsumption / diffHours;
+
+            return { consumption: totalConsumption, focPerHour: focPerHour };
+        }
+        
+        document.addEventListener("DOMContentLoaded", function () {
+            // Fungsi untuk mendapatkan datetime dalam format "YYYY-MM-DDTHH:MM"
+            function getCurrentDateTime(offsetHours = 0) {
+                let now = new Date();
+                now.setHours(now.getHours() + offsetHours); // Tambahkan offset jam
+
+                // Format ke "YYYY-MM-DDTHH:MM"
+                return now.toISOString().slice(0, 16);
+            }
+
+            // Set nilai default ke input datetime-local
+            document.getElementById("startDate").value = getCurrentDateTime(); // Waktu sekarang
+            document.getElementById("endDate").value = getCurrentDateTime(12); // +12 jam dari sekarang
+        });
+        
+        
+     
+
+    window.onload = function() {
+        let today = new Date().toISOString().slice(0, 16);
+        let startInputGeneral = document.getElementById("startDatetimeGeneral");
+        let endInputGeneral = document.getElementById("endDatetimeGeneral");
+        let ladenStartInput = document.getElementById("ladenStart");
+        let ladenEndInput = document.getElementById("ladenEnd");
+
+        if (startInputGeneral && endInputGeneral) {
+            startInputGeneral.value = fuelData.length > 0 ? fuelData[0].time : today;
+            endInputGeneral.value = fuelData.length > 0 ? fuelData[fuelData.length - 1].time : today;
+        }
+
+        // Set default values for Laden Start and Laden End
+        if (ladenStartInput && ladenEndInput) {
+            ladenStartInput.value = fuelData.length > 1 ? fuelData[1].time : today;
+            ladenEndInput.value = fuelData.length > 2 ? fuelData[fuelData.length - 2].time : today;
+        }
+    };
+
+    function calculateFOC(startId, endId, outputId) {
+        let startDate = document.getElementById(startId).value;
+        let endDate = document.getElementById(endId).value;
+        let totalFOCInput = document.getElementById(outputId);
+
+        if (!startDate || !endDate) {
+            alert("Pilih Start Date dan End Date terlebih dahulu!");
+            return;
+        }
+
+        let startTimestamp = new Date(startDate).getTime();
+        let endTimestamp = new Date(endDate).getTime();
+
+        let totalFOC = fuelData
+            .filter(entry => {
+                let entryTimestamp = new Date(entry.time).getTime();
+                return entryTimestamp >= startTimestamp && entryTimestamp <= endTimestamp;
+            })
+            .reduce((sum, entry) => sum + entry.consump, 0);
+
+        totalFOCInput.value = totalFOC;
+    }
+		document.addEventListener("DOMContentLoaded", function () {
+    let now = new Date();
+    
+    // Format ke 'YYYY-MM-DDTHH:MM' (untuk input datetime-local)
+    let formattedDateTime = now.toISOString().slice(0, 16);
+    
+    // Set nilai default
+    document.getElementById("ladenStart").value = formattedDateTime;
+    document.getElementById("ladenEnd").value = formattedDateTime;
+});
+
+function calculateLadenFOC() {
+    let startLaden = document.getElementById("ladenStart").value;
+    let endLaden = document.getElementById("ladenEnd").value;
+    let distanceInput = document.getElementById("ladenDistance").value;
+    let totalFOCLadenInput = document.getElementById("totalFOCLaden");
+    let avgFOCHoursInput = document.getElementById("avgFOCHours");
+    let speedAverageInput = document.getElementById("speedAverage");
+
+    // Validasi input
+    if (!startLaden || !endLaden) {
+        alert("Pilih Laden Start dan End Time!");
+        return;
+    }
+    if (!distanceInput || distanceInput <= 0) {
+        alert("Masukkan jarak (Distance Laden Voyage) yang valid!");
+        return;
+    }
+
+    // Konversi waktu ke timestamp
+    let startTimestamp = new Date(startLaden).getTime();
+    let endTimestamp = new Date(endLaden).getTime();
+    
+    // Hitung total jam perjalanan
+    let totalHours = (endTimestamp - startTimestamp) / (1000 * 60 * 60);
+    
+    if (totalHours <= 0) {
+        alert("End time harus lebih besar dari start time!");
+        return;
+    }
+
+    
+    // Hitung total konsumsi bahan bakar dalam rentang waktu
+    let totalFOC = fuelData
+        .filter(entry => {
+            let entryTimestamp = new Date(entry.time).getTime();
+            return entryTimestamp >= startTimestamp && entryTimestamp <= endTimestamp;
+        })
+        .reduce((sum, entry) => sum + entry.consump, 0);
+    
+    // Hitung rata-rata FOC per jam
+    totalFOCLadenInput.value = totalFOC;
+    avgFOCHoursInput.value = (totalFOC / totalHours).toFixed(2);
+
+    // Hitung Speed Average
+    let distance = parseFloat(distanceInput);
+    speedAverageInput.value = (distance / totalHours).toFixed(2);
+}
+    
+    document.addEventListener("DOMContentLoaded", function () {
+        let now = new Date();
+
+        // Format ke 'YYYY-MM-DDTHH:MM' (untuk input datetime-local)
+        let formattedDateTime = now.toISOString().slice(0, 16);
+
+        // Set nilai default
+        document.getElementById("ballastStart").value = formattedDateTime;
+        document.getElementById("ballastEnd").value = formattedDateTime;
+    });
+    
+    function calculateBallastFOC() {
+    let startballast = document.getElementById("ballastStart").value;
+    let endballast = document.getElementById("ballastEnd").value;
+    let distanceInput = document.getElementById("ballastDistance").value;
+    let totalFOCLadenInput = document.getElementById("totalFOCballast");
+    let avgFOCHoursInput = document.getElementById("avgFOCHoursBallast");
+    let speedAverageInput = document.getElementById("speedAverageBallast");
+
+    // Validasi input
+    if (!startballast || !endballast) {
+        alert("Pilih Laden Start dan End Time!");
+        return;
+    }
+    if (!distanceInput || distanceInput <= 0) {
+        alert("Masukkan jarak (Distance Laden Voyage) yang valid!");
+        return;
+    }
+
+    // Konversi waktu ke timestamp
+    let startTimestamp = new Date(startballast).getTime();
+    let endTimestamp = new Date(endballast).getTime();
+    
+    // Hitung total jam perjalanan
+    let totalHours = (endTimestamp - startTimestamp) / (1000 * 60 * 60);
+    
+    if (totalHours <= 0) {
+        alert("End time harus lebih besar dari start time!");
+        return;
+    }
+
+    
+    
+    // Hitung total konsumsi bahan bakar dalam rentang waktu
+    let totalFOC = fuelData
+        .filter(entry => {
+            let entryTimestamp = new Date(entry.time).getTime();
+            return entryTimestamp >= startTimestamp && entryTimestamp <= endTimestamp;
+        })
+        .reduce((sum, entry) => sum + entry.consump, 0);
+    
+    // Hitung rata-rata FOC per jam
+    totalFOCLadenInput.value = totalFOC;
+    avgFOCHoursInput.value = (totalFOC / totalHours).toFixed(2);
+
+    // Hitung Speed Average
+    let distance = parseFloat(distanceInput);
+    speedAverageInput.value = (distance / totalHours).toFixed(2);
+}
+    document.getElementById("calculateAllBtn").addEventListener("click", function () {
+        calculateFOC("startDatetimeGeneral", "endDatetimeGeneral", "totalFOCGeneral");
+        calculateLadenFOC();
+        calculateBallastFOC();
+    });
+    </script>
+</body>
+</html>
